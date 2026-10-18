@@ -15,6 +15,7 @@
 
 #include "boot_ui.h"
 #include "home_ui.h"
+#include "media_catalog.h"
 #include "ui_manager.h"
 
 #include "harness.h"
@@ -129,6 +130,27 @@ static lv_obj_t *find_label(lv_obj_t *root, const char *text) {
     if (lv_obj_check_type(c, &lv_label_class) && strcmp(lv_label_get_text(c), text) == 0)
       return c;
     lv_obj_t *hit = find_label(c, text);
+    if (hit != NULL)
+      return hit;
+  }
+  return NULL;
+}
+
+// Like find_label, but also matches a label LVGL has truncated to "prefix..." to fit its width.
+static lv_obj_t *find_label_fit(lv_obj_t *root, const char *text) {
+  uint32_t n = lv_obj_get_child_count(root);
+  for (uint32_t i = 0; i < n; i++) {
+    lv_obj_t *c = lv_obj_get_child(root, (int32_t)i);
+    if (lv_obj_check_type(c, &lv_label_class)) {
+      const char *got = lv_label_get_text(c);
+      size_t len = strlen(got);
+      if (strcmp(got, text) == 0)
+        return c;
+      if (len > 3 && strcmp(got + len - 3, "...") == 0 && strlen(text) > len - 3 &&
+          strncmp(got, text, len - 3) == 0)
+        return c;
+    }
+    lv_obj_t *hit = find_label_fit(c, text);
     if (hit != NULL)
       return hit;
   }
@@ -268,18 +290,116 @@ static void select_and_open(int index) {
 
 static void test_launch_targets(void) {
   printf("launch targets\n");
+
+  // music / videos / pictures open the real media list for their category.
+  for (int i = 0; i < MEDIA_CATEGORY_COUNT; i++) {
+    open_hub();
+    select_and_open(i);
+    CHECK(ui_current_screen() == SCREEN_MEDIA_LIST, "'%s' opened screen %d, expected the media list", HUB_NAMES[i], ui_current_screen());
+    CHECK(find_label(lv_screen_active(), media_catalog_title((media_category_t)i)) != NULL, "'%s' list is missing its title", HUB_NAMES[i]);
+  }
+
+  // settings and high boy hand off to other screens (stubbed here).
   struct {
     int index;
     const char *expect;
-  } cases[] = {{0, "MUSIC LIBRARY"}, {1, "FILES"}, {2, "FILES"}, {3, "SETTINGS"}, {4, "HIGH BOY MENU"}};
+  } cases[] = {{3, "SETTINGS"}, {4, "HIGH BOY MENU"}};
 
   for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
     open_hub();
     select_and_open(cases[i].index);
     CHECK(strcmp(s_last_open, cases[i].expect) == 0, "'%s' opened '%s', expected '%s'", HUB_NAMES[cases[i].index], s_last_open, cases[i].expect);
-    if (cases[i].index == 4) {
+    if (cases[i].index == 4)
       dump_frame("launch_high_boy");
+  }
+}
+
+// The selected row is the one whose title is drawn in the selection colour (white).
+static int media_selected(media_category_t cat) {
+  int found = -1;
+  for (size_t i = 0; i < media_catalog_count(cat); i++) {
+    lv_obj_t *l = find_label_fit(lv_screen_active(), media_catalog_item(cat, i)->title);
+    if (l == NULL)
+      return -2;
+    if (lv_color_eq(lv_obj_get_style_text_color(l, 0), lv_color_hex(0xFFFFFF))) {
+      if (found != -1)
+        return -3;
+      found = (int)i;
     }
+  }
+  return found;
+}
+
+static int32_t media_bottom(media_category_t cat, size_t idx) {
+  lv_obj_t *l = find_label_fit(lv_screen_active(), media_catalog_item(cat, idx)->title);
+  lv_area_t a;
+  lv_obj_get_coords(l, &a);
+  return a.y2;
+}
+
+static void test_media_lists(void) {
+  printf("media lists\n");
+  const char *frame_names[] = {"music", "videos", "pictures"};
+
+  for (int c = 0; c < MEDIA_CATEGORY_COUNT; c++) {
+    media_category_t cat = (media_category_t)c;
+    size_t n = media_catalog_count(cat);
+    CHECK(n >= 5, "%s needs a believable number of items, has %zu", frame_names[c], n);
+
+    open_hub();
+    select_and_open(c);
+    advance(600);
+    lv_obj_t *scr = lv_screen_active();
+
+    for (size_t i = 0; i < n; i++) {
+      const media_item_t *it = media_catalog_item(cat, i);
+      CHECK(find_label_fit(scr, it->title) != NULL, "%s: item '%s' missing", frame_names[c], it->title);
+      CHECK(find_label_fit(scr, it->subtitle) != NULL, "%s: subtitle of '%s' missing", frame_names[c], it->title);
+      lv_obj_t *tl = find_label_fit(scr, it->title);
+      lv_obj_t *sl = find_label_fit(scr, it->subtitle);
+      CHECK(tl != NULL && lv_obj_get_height(tl) <= lv_font_get_line_height(&lv_font_montserrat_16) + 2, "%s: title '%s' wraps onto a second line", frame_names[c], it->title);
+      CHECK(sl != NULL && lv_obj_get_height(sl) <= lv_font_get_line_height(&lv_font_montserrat_12) + 2, "%s: subtitle of '%s' wraps onto a second line", frame_names[c], it->title);
+      CHECK(find_label_fit(scr, it->detail) != NULL, "%s: detail of '%s' missing", frame_names[c], it->title);
+    }
+    CHECK(media_selected(cat) == 0, "%s: first item should start selected, got %d", frame_names[c], media_selected(cat));
+    CHECK(media_bottom(cat, n - 1) > SCREEN_H, "%s: the last item should start below the fold", frame_names[c]);
+
+    char name[64];
+    snprintf(name, sizeof(name), "list_%s_0", frame_names[c]);
+    dump_frame(name);
+
+    for (size_t i = 1; i < n; i++) {
+      press(LV_KEY_DOWN);
+      advance(450);
+      CHECK(media_selected(cat) == (int)i, "%s: after %zu DOWN presses selected=%d", frame_names[c], i, media_selected(cat));
+    }
+    CHECK(media_bottom(cat, n - 1) <= SCREEN_H, "%s: scrolling to the end must reveal the last item (bottom=%d)", frame_names[c], media_bottom(cat, n - 1));
+    snprintf(name, sizeof(name), "list_%s_end", frame_names[c]);
+    dump_frame(name);
+
+    press(LV_KEY_DOWN);
+    advance(450);
+    CHECK(media_selected(cat) == (int)n - 1, "%s: DOWN past the end must clamp, got %d", frame_names[c], media_selected(cat));
+
+    for (size_t i = n - 1; i > 0; i--) {
+      press(LV_KEY_UP);
+      advance(450);
+    }
+    CHECK(media_selected(cat) == 0, "%s: UP back to the top, got %d", frame_names[c], media_selected(cat));
+    press(LV_KEY_UP);
+    advance(450);
+    CHECK(media_selected(cat) == 0, "%s: UP past the start must clamp, got %d", frame_names[c], media_selected(cat));
+
+    // Fake media: OK does nothing and stays on the list.
+    press(LV_KEY_ENTER);
+    advance(200);
+    CHECK(ui_current_screen() == SCREEN_MEDIA_LIST, "%s: OK on a fake item must stay on the list", frame_names[c]);
+
+    // Back returns to the hub with the same entry selected.
+    press(LV_KEY_ESC);
+    advance(100);
+    CHECK(ui_current_screen() == SCREEN_HOME, "%s: Back must return home, got %d", frame_names[c], ui_current_screen());
+    CHECK(hub_selected() == c, "%s: hub should still have it selected, got %d", frame_names[c], hub_selected());
   }
 }
 
@@ -297,15 +417,16 @@ static void test_back_navigation(void) {
   advance(100);
   CHECK(hub_selected() == 3, "hub should remember 'settings', got %d", hub_selected());
 
-  // Deeper navigation keeps the redirect: music -> (player) -> BACK -> library -> BACK -> hub.
-  select_and_open(0);
+  // Deeper navigation keeps the redirect: settings -> (player) -> BACK -> library -> BACK -> hub.
+  advance(600); // the hub ignores input for 500 ms after a screen switch
+  select_and_open(3);
   advance(600);
   ui_switch_screen(SCREEN_MP3_PLAYER);
   advance(600);
   ui_switch_screen(SCREEN_PLAYER);
   advance(600);
   ui_switch_screen(SCREEN_MENU);
-  CHECK(ui_current_screen() == SCREEN_HOME, "BACK from the music library must land on the hub, got %d", ui_current_screen());
+  CHECK(ui_current_screen() == SCREEN_HOME, "BACK from a nested hub-launched screen must land on the hub, got %d", ui_current_screen());
 
   // A tool opened from the high boy carousel still goes back to the carousel.
   advance(600);
@@ -359,6 +480,7 @@ int main(int argc, char **argv) {
   test_boot();
   test_hub();
   test_launch_targets();
+  test_media_lists();
   test_back_navigation();
 
   printf("\n%d checks, %d failed\n", s_checks, s_failures);

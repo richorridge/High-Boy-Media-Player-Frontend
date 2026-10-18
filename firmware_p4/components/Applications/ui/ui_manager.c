@@ -82,6 +82,7 @@
 #include "mp4_player_ui.h"
 #include "wav_player_ui.h"
 #include "image_viewer_ui.h"
+#include "media_list_ui.h"
 #include "usb_storage_ui.h"
 #include "wav_library_ui.h"
 #include "spectrum_ui.h"
@@ -461,6 +462,8 @@ static ui_open_fn_t screen_open_fn(screen_id_t s) {
       return ui_mp3_player_open;
     case SCREEN_PLAYER:
       return ui_wav_library_open;
+    case SCREEN_MEDIA_LIST:
+      return ui_media_list_open;
     case SCREEN_IMAGE_VIEWER:
       return ui_image_viewer_open;
     case SCREEN_USB_STORAGE:

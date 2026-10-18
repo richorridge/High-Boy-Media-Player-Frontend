@@ -5,7 +5,8 @@ A media-player front end for the High Code High Boy, styled after the Microsoft 
 
 - **Boot** - a black screen that simply says "Loading Media".
 - **Home** - a Zune-style hub of big lowercase titles: `music`, `videos`, `pictures`, `settings`, `high boy`.
-  Up/Down scrolls, OK opens. `music` opens the music library, `videos` and `pictures` open the file browser,
+  Up/Down scrolls, OK opens. `music`, `videos` and `pictures` open Zune-style lists of **demo media** (invented
+  titles with thumbnail tiles, runtimes and dates; they cannot be played and nothing on the SD card is read).
   `settings` opens configuration.
 - **high boy** - the last entry, below the fold until you scroll down to it. It opens the original carousel
   with every TentacleOS tool (Wi-Fi, Bluetooth, NFC, RFID, Infrared, Sub-GHz, LoRa, BadUSB, GPIO, files, apps,
@@ -16,11 +17,17 @@ A media-player front end for the High Code High Boy, styled after the Microsoft 
 Rendered by the [headless simulator](tools/fakezune_sim/README.md) from the real firmware UI code, not photos of a
 device. The clock shows a placeholder time and the wifi/battery icons are not drawn.
 
-![Boot screen, then the home hub scrolling from music down to high boy](pics/fakezune/overview.png)
+![Boot screen, home hub, the music, videos and pictures lists, and the high boy entry](pics/fakezune/overview.png)
 
 | Boot | Home | Scrolled | high boy | Landscape |
 | --- | --- | --- | --- | --- |
 | <img src="pics/fakezune/boot-loading-media.png" width="120"> | <img src="pics/fakezune/home-music.png" width="120"> | <img src="pics/fakezune/home-scrolled.png" width="120"> | <img src="pics/fakezune/home-high-boy.png" width="120"> | <img src="pics/fakezune/home-landscape.png" width="160"> |
+
+| Music | Videos | Pictures | Landscape list |
+| --- | --- | --- | --- |
+| <img src="pics/fakezune/list-music.png" width="120"> | <img src="pics/fakezune/list-videos.png" width="120"> | <img src="pics/fakezune/list-pictures.png" width="120"> | <img src="pics/fakezune/list-landscape.png" width="160"> |
+
+The real music library and file browser are still available inside `high boy` (Player and Files).
 
 Screens opened from the hub return to the hub on Back; screens opened from the carousel return to the carousel.
 

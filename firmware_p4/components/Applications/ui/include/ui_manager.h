@@ -173,6 +173,7 @@ typedef enum {
   SCREEN_TIME,
   SCREEN_IMAGE_VIEWER,
   SCREEN_USB_STORAGE,
+  SCREEN_MEDIA_LIST,
   SCREEN_COUNT
 } screen_id_t;
 

@@ -39,6 +39,9 @@ add_executable(fakezune_sim
     src/main.c
     src/stubs.c
     ${UI_ROOT}/ui_manager.c
+    ${UI_ROOT}/zune_style.c
+    ${UI_ROOT}/screens/media/media_catalog.c
+    ${UI_ROOT}/screens/media/media_list_ui.c
     ${UI_ROOT}/screens/boot/boot_ui.c
     ${UI_ROOT}/screens/home/home_ui.c
 )

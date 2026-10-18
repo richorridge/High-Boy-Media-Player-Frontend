@@ -83,6 +83,7 @@ idf_component_register(SRCS
   "ui/screens/audio/include"
   "ui/screens/video/include"
   "ui/screens/images/include"
+  "ui/screens/media/include"
   "ui/screens/badusb/include"
   "ui/screens/bluetooth/include"
   "ui/screens/boot/include"
