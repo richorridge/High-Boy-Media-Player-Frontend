@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release: ${{ steps.check.outputs.new_release }}
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Get latest tag before release
+        id: before
+        run: echo "tag=$(git tag -l 'v*' --sort=-v:refname | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: |
+          npm install \
+            semantic-release@24 \
+            conventional-changelog-conventionalcommits@8 \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator@14 \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git \
+            @semantic-release/github
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+      - name: Check if new release was created
+        id: check
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          BEFORE_TAG="${{ steps.before.outputs.tag }}"
+          if [ "$LATEST_TAG" != "$BEFORE_TAG" ] && [ -n "$LATEST_TAG" ]; then
+            VERSION="${LATEST_TAG#v}"
+            echo "new_release=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "New release: $VERSION"
+          else
+            echo "new_release=false" >> $GITHUB_OUTPUT
+            echo "No new release"
+          fi
+
+  build:
+    name: Build & Upload
+    needs: release
+    if: needs.release.outputs.new_release == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.5.1
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: recursive
+
+      - name: Build
+        run: bash tools/build.sh
+        shell: bash
+
+      - name: Rename binaries
+        run: |
+          cp firmware_p4/build/TentacleOS_P4.bin "TentacleOS-P4-${{ needs.release.outputs.version }}.bin"
+          cp firmware_c5/build/TentacleOS_C5.bin "TentacleOS-C5-${{ needs.release.outputs.version }}.bin"
+
+      - name: Upload binaries to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ needs.release.outputs.version }}"
+          files: |
+            TentacleOS-P4-${{ needs.release.outputs.version }}.bin
+            TentacleOS-C5-${{ needs.release.outputs.version }}.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
