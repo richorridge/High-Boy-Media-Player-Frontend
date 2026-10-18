@@ -11,6 +11,17 @@ A media-player front end for the High Code High Boy, styled after the Microsoft 
   with every TentacleOS tool (Wi-Fi, Bluetooth, NFC, RFID, Infrared, Sub-GHz, LoRa, BadUSB, GPIO, files, apps,
   player, Octobit, dev). Back from the carousel returns to the hub.
 
+## Screenshots
+
+Rendered by the [headless simulator](tools/fakezune_sim/README.md) from the real firmware UI code, not photos of a
+device. The clock shows a placeholder time and the wifi/battery icons are not drawn.
+
+![Boot screen, then the home hub scrolling from music down to high boy](pics/fakezune/overview.png)
+
+| Boot | Home | Scrolled | high boy | Landscape |
+| --- | --- | --- | --- | --- |
+| <img src="pics/fakezune/boot-loading-media.png" width="120"> | <img src="pics/fakezune/home-music.png" width="120"> | <img src="pics/fakezune/home-scrolled.png" width="120"> | <img src="pics/fakezune/home-high-boy.png" width="120"> | <img src="pics/fakezune/home-landscape.png" width="160"> |
+
 Screens opened from the hub return to the hub on Back; screens opened from the carousel return to the carousel.
 
 Test the new screens without hardware: see [tools/fakezune_sim](tools/fakezune_sim/README.md).
