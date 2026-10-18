@@ -228,13 +228,6 @@ Estamos comprometidos em oferecer um ambiente amigável, seguro e acolhedor para
 
 ---
 
-## Nossos Apoiadores
-
-Agradecemos especialmente aos parceiros que apoiam este projeto:
-
-[![PCBWay](pics/PCBway.png)](https://www.pcbway.com)
-
----
 
 ## Licença
 Este projeto está licenciado sob a **GNU General Public License v3.0**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.

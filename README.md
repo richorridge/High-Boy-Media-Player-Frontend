@@ -260,12 +260,5 @@ Please read our [**CONTRIBUTING.md**](CONTRIBUTING.md) for more details on the c
 We are committed to providing a friendly, safe, and welcoming environment for all. Please read our [**Code of Conduct**](CODE_OF_CONDUCT.md) to understand the expectations for participating in this project.
 
 
-## Our Supporters
-
-Special thanks to the partners supporting this project:
-
-[![PCBWay](pics/PCBway.png)](https://www.pcbway.com)
-
-
 ## License
 This project is licensed under the **GNU General Public License v3.0**. See the [LICENSE](LICENSE) file for details.
