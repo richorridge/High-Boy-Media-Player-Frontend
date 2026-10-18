@@ -36,7 +36,7 @@ static const char *TAG = "HOME_UI";
 #define HOME_HEADER_HEIGHT     ((ui_screen_h() * HOME_HEADER_HEIGHT_PCT) / 100)
 
 #define HOME_BG_COLOR     0x000000
-#define HOME_ACCENT_COLOR 0xF26A10
+#define HOME_ACCENT_COLOR 0xA23BEC
 #define HOME_SEL_COLOR    0xFFFFFF
 #define HOME_NEAR_COLOR   0x7A7A7A
 #define HOME_FAR_COLOR    0x4D4D4D
